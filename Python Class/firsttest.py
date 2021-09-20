@@ -1,0 +1,3 @@
+print('Hi there')
+name = input("omae no namawae nandeska? ")
+print(f'It is nice to meet you {name}')
