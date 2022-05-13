@@ -1,5 +1,5 @@
 # Personal-and-School-Projects
-This repository has my personal and school projects
+This repository has my personal and school projects that I have done while at Purdue University as a Class of 2024 Electrical Engineering Student.
 
 Each folder contains different codes with different classes pertaining to divergent classes.
 
