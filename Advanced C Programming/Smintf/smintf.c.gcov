@@ -1,0 +1,403 @@
+        -:    0:Source:smintf.c
+        -:    0:Graph:smintf.gcno
+        -:    0:Data:smintf.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdlib.h>
+        -:    3:#include <stdbool.h>
+        -:    4:#include <assert.h>
+        -:    5:#include <stdarg.h>
+        -:    6:#include "smintf.h"
+        -:    7:#include "clog.h"
+        -:    8:#include "miniunit.h"
+        -:    9:
+        -:   10:int _printInteger (int radix, int n, char* s);
+        -:   11:int _characterCounter(const char *format, va_list moreArgs);
+        -:   12:char* _stringCreator(const char *format, char* finalString, va_list moreArgs);
+        -:   13:char* _numberDealer(char *unfinishedString,int  *indexFinalStringCopy,int indexFinalString, int radix, int n, char *s);
+        -:   14:
+        -:   15:
+       27:   16:char* smintf(const char *format, ...) {
+        -:   17:
+        -:   18:	va_list moreArgs;
+       27:   19:	va_start(moreArgs, format);
+        -:   20:	va_list moreArgsCopy;
+       27:   21:	va_copy(moreArgsCopy, moreArgs);
+        -:   22:
+        -:   23:	//allocate memory with malloc using the string size we found and make sure to allocate enough space for the null character
+       27:   24:	int sizeInput = _characterCounter(format, moreArgs) + 1; 
+       27:   25:	char* finalStringEmpty = malloc(sizeof(*finalStringEmpty) * sizeInput);
+       27:   26:	char* finalString = _stringCreator(format, finalStringEmpty, moreArgsCopy);
+        -:   27:
+       27:   28:	return(finalString);
+        -:   29:	va_end(moreArgs);
+        -:   30:	va_end(moreArgsCopy);
+        -:   31:
+        -:   32:}
+        -:   33:
+       27:   34:char* _stringCreator(const char* format, char* finalString, va_list moreArgs) {
+        -:   35:	int decimal;
+        -:   36:	int valueToPrint;
+        -:   37:	char* valueToPrintChar;
+       27:   38:	int indexFinalString = 0; //index of the final string. We will update the returned string according to this variable
+        -:   39:	int indexFinalStringCopy;
+        -:   40:
+        -:   41:
+      245:   42:	for(int idxInString = 0; format[idxInString] != '\0'; idxInString++) 
+        -:   43:	{   
+      218:   44:		if (format[idxInString] == '%') 
+        -:   45:		{
+        -:   46:
+       30:   47:			if (format[idxInString + 1] == 'c')
+        -:   48:			{
+        4:   49:				valueToPrint = va_arg(moreArgs,int);
+        4:   50:				finalString[indexFinalString] = valueToPrint;
+        -:   51:			}
+        -:   52:
+       26:   53:			else if (format[idxInString + 1] == 's')
+        -:   54:			{
+        5:   55:				valueToPrintChar = va_arg(moreArgs, char*);
+       37:   56:				for(int idxInValueToPrint = 0; valueToPrintChar[idxInValueToPrint] != '\0'; idxInValueToPrint++) 
+        -:   57:				{
+       32:   58:					finalString[indexFinalString] = valueToPrintChar[idxInValueToPrint];
+       32:   59:					indexFinalString++;
+        -:   60:				}
+        5:   61:				indexFinalString--;
+        -:   62:				//free(valueToPrintChar);
+        -:   63:			}
+        -:   64:
+       21:   65:			else if (format[idxInString + 1] == 'd')
+        -:   66:			{
+        8:   67:				valueToPrint = va_arg(moreArgs, int);
+        8:   68:				finalString = _numberDealer(finalString,&indexFinalStringCopy,indexFinalString, 10, valueToPrint, "");
+        8:   69:				indexFinalString = indexFinalStringCopy - 1;
+        -:   70:			}
+        -:   71:
+       13:   72:			else if (format[idxInString + 1] == 'b')
+        -:   73:			{
+        3:   74:				valueToPrint = va_arg(moreArgs, int);
+        3:   75:				finalString = _numberDealer(finalString,&indexFinalStringCopy,indexFinalString, 2, valueToPrint, "0b");
+        3:   76:				indexFinalString = indexFinalStringCopy - 1;
+        -:   77:			}
+        -:   78:
+       10:   79:			else if (format[idxInString + 1] == 'x')
+        -:   80:			{
+        3:   81:				valueToPrint = va_arg(moreArgs, int);
+        3:   82:				finalString = _numberDealer(finalString,&indexFinalStringCopy,indexFinalString, 16, valueToPrint, "0x");
+        3:   83:				indexFinalString = indexFinalStringCopy - 1;
+        -:   84:
+        -:   85:			}
+        -:   86:
+        7:   87:			else if (format[idxInString + 1] == '%')
+        -:   88:			{
+        1:   89:				finalString[indexFinalString] = '%';
+        -:   90:			}
+        -:   91:
+        6:   92:			else if(format[idxInString + 1] == '$')
+        -:   93:			{ 
+        2:   94:				valueToPrint = va_arg(moreArgs, int);
+        -:   95:
+        -:   96:
+        2:   97:				if (valueToPrint < 0)
+        -:   98:				{
+        1:   99:					finalString[indexFinalString] = '-';
+        1:  100:					indexFinalString++;
+        -:  101:				}
+        -:  102:
+        2:  103:				finalString[indexFinalString] = '$';
+        2:  104:				indexFinalString++;
+        -:  105:
+        2:  106:				decimal = abs(valueToPrint % 100);
+        2:  107:				valueToPrint = abs(valueToPrint / 100);
+        -:  108:
+        2:  109:				finalString = _numberDealer(finalString, &indexFinalStringCopy,indexFinalString, 10, valueToPrint, "");
+        2:  110:				indexFinalString = indexFinalStringCopy;
+        -:  111:
+        -:  112:
+        2:  113:				finalString[indexFinalString] = '.';
+        -:  114:				
+        2:  115:				indexFinalString++;
+        2:  116:				finalString[indexFinalString] = decimal / 10 + '0';
+        -:  117:
+        2:  118:				indexFinalString++;
+        2:  119:				finalString[indexFinalString] = decimal % 10 + '0';
+        -:  120:			}
+        -:  121:
+        -:  122:			else
+        -:  123:			{
+        4:  124:				finalString[indexFinalString] = '%';
+        4:  125:				indexFinalString++;
+        4:  126:				finalString[indexFinalString] = format[idxInString + 1]; 	
+        -:  127:			}
+        -:  128:
+       30:  129:			idxInString += 1;
+        -:  130:
+        -:  131:		}
+        -:  132:
+        -:  133:		else 
+        -:  134:		{
+      188:  135:			finalString[indexFinalString] = format[idxInString];
+        -:  136:		}
+        -:  137:
+      218:  138:		indexFinalString++;
+        -:  139:	}
+        -:  140:	
+       27:  141:	finalString[indexFinalString] = '\0';
+        -:  142:
+       27:  143:	return(finalString);
+        -:  144:}
+        -:  145:
+       16:  146:char* _numberDealer(char *unfinishedString,int  *indexFinalStringCopy,int indexFinalString,int radix, int n, char *s) {	
+        -:  147:	
+       16:  148:	int numberSystem = radix;
+       16:  149:	int controlVariable = -1; 
+        -:  150:	int remainder; 
+        -:  151:	int divider; 
+       16:  152:	unsigned int decimalNumCopy = n;
+       16:  153:	unsigned int decimalNumber = n;
+        -:  154:	unsigned int currentDecNum;
+        -:  155:
+       16:  156:	if (n < 0) {
+        4:  157:		unfinishedString[indexFinalString] = '-';
+        4:  158:		decimalNumCopy = -n;
+        4:  159:		decimalNumber = -n;
+        4:  160:		indexFinalString++;
+        -:  161:
+        -:  162:	}
+        -:  163:
+       28:  164:	for(int idxInStr = 0; s[idxInStr] != '\0'; idxInStr++) {
+       12:  165:		unfinishedString[indexFinalString] = s[idxInStr];
+       12:  166:		indexFinalString++;
+        -:  167:	}
+        -:  168:
+       50:  169:	while (decimalNumCopy != 0) 
+        -:  170:	{
+       34:  171:		remainder = decimalNumCopy % numberSystem;
+       34:  172:		decimalNumCopy = decimalNumCopy / numberSystem;
+        -:  173:
+       34:  174:		controlVariable++; 
+        -:  175:	} 
+        -:  176:
+       50:  177:	while (controlVariable >= 0) 
+        -:  178:	{
+       34:  179:		divider = 1;
+        -:  180:
+       34:  181:		if (controlVariable == 0)
+        -:  182:		{ 
+       14:  183:			divider = 1;
+        -:  184:		}
+        -:  185:		else
+        -:  186:		{
+       54:  187:			for (int i = controlVariable; i > 0; i--)
+        -:  188:			{
+       34:  189:				divider *= numberSystem;
+        -:  190:			}
+        -:  191:		}
+        -:  192:
+       34:  193:		currentDecNum = decimalNumber / divider; 
+       34:  194:		remainder = currentDecNum % numberSystem; 
+        -:  195:
+       34:  196:		if (remainder > 9) {
+    #####:  197:			unfinishedString[indexFinalString] = remainder + 'W';
+        -:  198:		}
+        -:  199:
+        -:  200:		else {
+       34:  201:			unfinishedString[indexFinalString] = '0' + remainder;
+        -:  202:			//fputc('0' + remainder, stdout);
+        -:  203:		}
+        -:  204:		
+       34:  205:		indexFinalString++;
+       34:  206:		controlVariable--;
+        -:  207:	}
+        -:  208:
+       16:  209:	if (decimalNumber == 0) {
+        2:  210:		unfinishedString[indexFinalString] = '0';
+        -:  211:		//fputc('0', stdout);   
+        2:  212:		indexFinalString++;
+        -:  213:	}          
+        -:  214:	
+       16:  215:	*indexFinalStringCopy = indexFinalString;
+       16:  216:	return(unfinishedString);
+        -:  217:}
+        -:  218:
+        -:  219:
+       27:  220:int _characterCounter(const char *format, va_list moreArgs) {
+        -:  221:
+        -:  222:	int valueToPrint;
+        -:  223:	char* valueToPrintChar;
+        -:  224:
+       27:  225:	int charCounter = 0; //We are reusing our original mintf function to create a character counter so that
+        -:  226:						 //we know how many characters the final string will have. By knowing the amount of characters
+        -:  227:						 //in the final string, we can then use that to allocate the necessary memory with MALLOC. The logic
+        -:  228:						 //behind this counter is to start with zero and add one everytime we were supposed print in the original 
+        -:  229:						 //function so that we know the actual amount of characters. 
+        -:  230:	
+        -:  231:	//va_list moreArgs;
+        -:  232:	//va_start(moreArgs, format);  
+        -:  233:
+        -:  234:
+      245:  235:	for(int idxInString = 0; format[idxInString] != '\0'; idxInString++)		 
+        -:  236:	{   
+      218:  237:		if (format[idxInString] == '%') 
+        -:  238:		{
+        -:  239:
+       30:  240:			if (format[idxInString + 1] == 'c')
+        -:  241:			{
+        4:  242:				valueToPrint = va_arg(moreArgs, int);
+        -:  243:
+        4:  244:				charCounter++;
+        -:  245:			}
+        -:  246:
+       26:  247:			else if (format[idxInString + 1] == 's')
+        -:  248:			{
+        5:  249:				valueToPrintChar = va_arg(moreArgs, char*);
+       37:  250:				for(int idxInValueToPrint = 0; valueToPrintChar[idxInValueToPrint] != '\0'; idxInValueToPrint++) 
+        -:  251:				{
+       32:  252:					charCounter++;
+        -:  253:				}
+        -:  254:			}
+        -:  255:
+       21:  256:			else if (format[idxInString + 1] == 'd')
+        -:  257:			{
+        8:  258:				valueToPrint = va_arg(moreArgs, int);
+        -:  259:
+        8:  260:				charCounter +=  _printInteger(10, valueToPrint, "");
+        -:  261:			}
+        -:  262:
+       13:  263:			else if (format[idxInString + 1] == 'b')
+        -:  264:			{
+        3:  265:				valueToPrint = va_arg(moreArgs, int);
+        -:  266:
+        3:  267:				charCounter += _printInteger(2, valueToPrint, "0b");
+        -:  268:			}
+        -:  269:
+       10:  270:			else if (format[idxInString + 1] == 'x')
+        -:  271:			{
+        3:  272:				valueToPrint = va_arg(moreArgs, int);
+        -:  273:
+        3:  274:				charCounter += _printInteger(16, valueToPrint, "0x");
+        -:  275:			}
+        -:  276:
+        7:  277:			else if (format[idxInString + 1] == '%')
+        -:  278:			{
+        1:  279:				charCounter++;
+        -:  280:			}
+        -:  281:
+        6:  282:			else if(format[idxInString + 1] == '$')
+        -:  283:			{ 
+        2:  284:				valueToPrint = va_arg(moreArgs, int);
+        -:  285:
+        -:  286:
+        2:  287:				if (valueToPrint < 0)
+        -:  288:				{
+        1:  289:					charCounter++;
+        -:  290:				}
+        -:  291:				
+        2:  292:				valueToPrint = abs(valueToPrint / 100);
+        -:  293:
+        -:  294:
+        2:  295:				charCounter += _printInteger(10, valueToPrint, "");
+        -:  296:
+        2:  297:				charCounter += 4;
+        -:  298:
+        -:  299:			}
+        -:  300:
+        -:  301:			else
+        -:  302:			{
+        4:  303:				charCounter += 2;
+        -:  304:			}
+        -:  305:
+       30:  306:			idxInString += 1;
+        -:  307:
+        -:  308:		}
+        -:  309:
+        -:  310:		else 
+        -:  311:		{
+      188:  312:			charCounter++;
+        -:  313:		}
+        -:  314:	}
+        -:  315:
+        -:  316:	//va_end(moreArgs);   
+        -:  317:
+       27:  318:	return(charCounter);
+        -:  319:}
+        -:  320:
+        -:  321:
+       16:  322:int _printInteger (int radix, int n, char* s) {
+        -:  323:
+       16:  324:	int numberSystem = radix;
+       16:  325:	int controlVariable = -1; 
+        -:  326:	int remainder; 
+        -:  327:	int divider; 
+       16:  328:	unsigned int decimalNumCopy = n;
+       16:  329:	unsigned int decimalNumber = n;
+        -:  330:	unsigned int currentDecNum;
+       16:  331:	int charCounter = 0;
+        -:  332:
+       16:  333:	if (n < 0) {
+        -:  334:		//fputc('-', stdout);
+        4:  335:		charCounter++;
+        4:  336:		decimalNumCopy = -n;
+        4:  337:		decimalNumber = -n;
+        -:  338:
+        -:  339:	}
+        -:  340:
+       28:  341:	for(int idxInStr = 0; s[idxInStr] != '\0'; idxInStr++) {
+        -:  342:		//fputc(s[idxInStr], stdout);
+       12:  343:		charCounter++;
+        -:  344:	}
+        -:  345:
+       50:  346:	while (decimalNumCopy != 0) 
+        -:  347:	{
+       34:  348:		remainder = decimalNumCopy % numberSystem;
+       34:  349:		decimalNumCopy = decimalNumCopy / numberSystem;
+        -:  350:
+       34:  351:		controlVariable++; 
+        -:  352:	} 
+        -:  353:
+       50:  354:	while (controlVariable >= 0) 
+        -:  355:	{
+       34:  356:		divider = 1;
+        -:  357:
+       34:  358:		if (controlVariable == 0)
+        -:  359:		{ 
+       14:  360:			divider = 1;
+        -:  361:		}
+        -:  362:		else
+        -:  363:		{
+       54:  364:			for (int i = controlVariable; i > 0; i--)
+        -:  365:			{
+       34:  366:				divider *= numberSystem;
+        -:  367:			}
+        -:  368:		}
+        -:  369:
+       34:  370:		currentDecNum = decimalNumber / divider; 
+       34:  371:		remainder = currentDecNum % numberSystem; 
+        -:  372:
+       34:  373:		if (remainder > 9) {
+        -:  374:			//fputc(remainder + 'W', stdout);
+    #####:  375:			charCounter++;
+        -:  376:		}
+        -:  377:
+        -:  378:		else {
+        -:  379:			//fputc('0' + remainder, stdout);
+       34:  380:			charCounter++;
+        -:  381:		}
+        -:  382:
+       34:  383:		controlVariable--;
+        -:  384:	}
+        -:  385:
+       16:  386:	if (decimalNumber == 0) {
+        -:  387:		//fputc('0', stdout);   
+        2:  388:		charCounter++;
+        -:  389:	}     
+        -:  390:
+       16:  391:	return(charCounter);
+        -:  392:}
+        -:  393:/*
+        -:  394:int main(int argc, char* argv[]) {
+        -:  395:	
+        -:  396:	return EXIT_SUCCESS;
+        -:  397:}*/
+        -:  398:/* vim: set tabstop=4 shiftwidth=4 fileencoding=utf-8 noexpandtab: */
