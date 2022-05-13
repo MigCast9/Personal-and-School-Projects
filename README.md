@@ -3,7 +3,7 @@ This repository has my personal and school projects
 
 Each folder contains different codes with different classes pertaining to divergent classes.
 
-Firstly, the Computational Quantum Electromagnetics Folder has code I have written has the first script I have ever written, in Python for something other than school or for personal use.
+Firstly, the Computational Quantum Electromagnetics Folder has code I have written has the first script I have ever written, in Python for something other than school or for personal use. Moreover, the "Python Class" folder has some very simple code related to the first class in Python I have taken.
 
 Secondly, my Python for Data Science Folder has assignments related to the class of same name I have taken at Purdue University on my third semester.
 
